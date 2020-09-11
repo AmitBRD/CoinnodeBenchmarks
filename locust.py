@@ -6,8 +6,7 @@ from locust import SequentialTaskSet,HttpUser,HttpLocust, task, between,events
 
 user = auth.user
 password= auth.password
-
-#curl --user michael --data-binary '{"jsonrpc": "1.0", "id":"curltest", "method": "getblock", "params": ["000000000000009a753dd0a038673fa672d9170d62a794244f9647550e37b701"] }' -H 'content-type: text/plain;' http://167.172.193.236:8889
+url = auth.url
 
 def tx_factory(tx_hashes):
   tx_hash = tx_hashes.pop()
@@ -25,7 +24,7 @@ class SequenceOfTasksSpec1(SequentialTaskSet):
       global block_num
       block_num = block_num+1
       resp = self.client.post(
-            url="http://167.172.193.236:8889",
+            url=url,
             data='{"jsonrpc": "1.0", "id":"load_tester", "method": "getblockhash", "params": ['+ str(block_num)+'] }',
             auth=(user,password),
             #headers={"authorization": "bearer " + 'token'},
@@ -37,7 +36,7 @@ class SequenceOfTasksSpec1(SequentialTaskSet):
     @task
     def get_block(self):
         resp = self.client.post(
-            url="http://167.172.193.236:8889",
+            url=url,
             data='{"jsonrpc": "1.0", "id":"curltest", "method": "getblock", "params": ["'+self.blockhash+'",2] }',
             auth=(user,password),
             #headers={"authorization": "bearer " + 'token'},
