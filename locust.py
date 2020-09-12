@@ -65,7 +65,22 @@ class SequenceOfTasksSpec1(SequentialTaskSet):
       print("A new test is ending")
       pass
 
-class SequenceOfTasksSpec2(SequenceOfTasksSpec1):
+class SequenceOfTasksSpec2(SequentialTaskSet):
+    blockhash = ''
+
+    @task
+    def get_blockhash(self):
+      global block_num
+      block_num = block_num+1
+      resp = self.client.post(
+            url=url,
+            data='{"jsonrpc": "1.0", "id":"load_tester", "method": "getblockhash", "params": ['+ str(block_num)+'] }',
+            auth=(user,password),
+            #headers={"authorization": "bearer " + 'token'},
+            name="/block")
+      json_response_dict = resp.json()
+      self.blockhash = json_response_dict['result']
+      pass
 
     @task
     def get_block(self):
