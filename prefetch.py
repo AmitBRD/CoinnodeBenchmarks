@@ -1,46 +1,10 @@
-# import asyncio
-# import aiohttp
-
-
-# CONCURRENT = 2
-
-# async def fetch(sem, session, url):
-#     async with sem, session.get(url) as response:
-#         with open("some_file_name.json", "wb") as out:
-#             async for chunk in response.content.iter_chunked(4096)
-#                 out.write(chunk)
-
-
-# async def fetch_all(urls, loop):
-#     sem = asyncio.Semaphore(CONCURRENT) 
-#     async with aiohttp.ClientSession(loop=loop) as session:
-#         results = await asyncio.gather(
-#             *[fetch(sem, session, url) for url in urls]
-#         )
-#         return results
-
-
-# if __name__ == '__main__':
-
-#     urls = (
-#         "https://public.api.openprocurement.org/api/2.5/tenders/6a0585fcfb05471796bb2b6a1d379f9b",
-#         "https://public.api.openprocurement.org/api/2.5/tenders/d1c74ec8bb9143d5b49e7ef32202f51c",
-#         "https://public.api.openprocurement.org/api/2.5/tenders/a3ec49c5b3e847fca2a1c215a2b69f8d",
-#         "https://public.api.openprocurement.org/api/2.5/tenders/52d8a15c55dd4f2ca9232f40c89bfa82",
-#         "https://public.api.openprocurement.org/api/2.5/tenders/b3af1cc6554440acbfe1d29103fe0c6a",
-#         "https://public.api.openprocurement.org/api/2.5/tenders/1d1c6560baac4a968f2c82c004a35c90",
-#     ) 
-
-#     loop = asyncio.get_event_loop()
-#     data = loop.run_until_complete(fetch_all(urls, loop))
-#     print(data)
-
 import argparse
 import auth
 import asyncio, random
 import aiohttp
 from aiofile import async_open,AIOFile, LineReader, Writer
 import json 
+from progress import print_progress_bar
 
 
 
@@ -57,16 +21,18 @@ async def fetch(queue,tx_queue,host,start_block,end_block,incrementer,partition)
               if(response.status == 200):
                 result = await response.json()
                 block_hash = result['blockHash']
-                print("blockhash:",block_hash, "...")
+                #print("blockhash:",block_hash, "...")
                 await queue.put(block_hash)
         if(block_hash):
-          print('retrieving data')
+          #print('retrieving data')
           async with aiohttp.ClientSession() as session:
             async with session.get(host+'/blocks/'+block_hash+'?txidsonly=true',headers=headers) as response:
                 if(response.status == 200):
                   data = await response.json()
                   [await tx_queue.put((tx['transactionId'],block_hash)) for tx in data['transactions']]
-        await rnd_sleep(.001)  
+        await rnd_sleep(.001) 
+        #TODO: this is not optimal , should only render at 60fps 
+        print_progress_bar(current_block-start_block,end_block-start_block, prefix = 'Progress:', suffix = 'Complete')
         block_hash = None    
         current_block= current_block+incrementer
  
@@ -79,7 +45,7 @@ async def store(queue,file):
         await afp.write(json.dumps(token)+'\n')
         #await afp.fsync()
         queue.task_done()
-        print(f'consumed {token}')
+        #print(f'consumed {token}')
  
 async def main(host='',start_block=0,end_block=0,concurrency=0,**kwargs):
     queue = asyncio.Queue()
