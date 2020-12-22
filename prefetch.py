@@ -36,15 +36,14 @@
 #     print(data)
 
 import argparse
-
+import auth
 import asyncio, random
 import aiohttp
 from aiofile import async_open,AIOFile, LineReader, Writer
+import json 
 
 
-jwt = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZGFwdGVyLWV0aGVyZXVtIiwiYnJkOmN0IjoiaW50IiwiZXhwIjo5MjIzMzcyMDM2ODU0Nzc1LCJpYXQiOjE2MDQwMDMxNjd9.AOM1mhLekIbKOdbU5Q2PBlLxVzypmkGeS5z1Vt7ENQY'
-headers = {'Authorization': "Bearer "+jwt};
- 
+
 async def rnd_sleep(t):
     # sleep for T seconds on average
     await asyncio.sleep(t * random.random() * 2)
@@ -71,7 +70,7 @@ async def fetch(queue,tx_queue,host,start_block,end_block,incrementer,partition)
         block_hash = None    
         current_block= current_block+incrementer
  
-import json 
+
 
 async def store(queue,file):
   async with async_open("./data/"+file, 'w+') as afp:
@@ -98,7 +97,7 @@ async def main(host='',start_block=0,end_block=0,concurrency=0,**kwargs):
  
     # wait for the remaining tasks to be processed
     await queue.join()
- 
+    await tx_queue.join()
     # cancel the consumers, which are now idle
     for c in consumers:
         c.cancel()
@@ -106,6 +105,8 @@ async def main(host='',start_block=0,end_block=0,concurrency=0,**kwargs):
 parser = argparse.ArgumentParser(description='Prefetch block and transaction hashes across a block range from host and store to file')
 parser.add_argument('host', metavar='host',type=str,
                     help='the host ip and port to that supports getHeight and getBlock requests')
+parser.add_argument('jwt', metavar='jwt',type=str,
+                    help='the jwt token for host requests')
 parser.add_argument('--filepath', metavar='filepath',type=str,default="./",
                     help='the file location the blocks.txt and transactions.txt will be stored to ')
 parser.add_argument('--concurrency', metavar='concurrency',type=int,default=10,
@@ -115,8 +116,8 @@ parser.add_argument('start_block', metavar='start_block',type=int,
 parser.add_argument('end_block', metavar='end_block',type=int,
                     help='block to fetch until exclusive')
 
+
 args = parser.parse_args()
-
-print(vars(args))
-
+parsed_args = vars(args)
+headers = {'Authorization': "Bearer "+parsed_args['jwt']}; 
 asyncio.run(main(**vars(args)))
