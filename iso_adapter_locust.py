@@ -4,10 +4,10 @@ gevent.monkey.patch_all()
 from gevent import queue
 from locust import SequentialTaskSet,HttpUser,HttpLocust, task, between,events
 import json
+import auth
 
-jwt = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZGFwdGVyLWV0aGVyZXVtIiwiYnJkOmN0IjoiaW50IiwiZXhwIjo5MjIzMzcyMDM2ODU0Nzc1LCJpYXQiOjE2MDQwMDMxNjd9.AOM1mhLekIbKOdbU5Q2PBlLxVzypmkGeS5z1Vt7ENQY'
 url = 'http://localhost:9001'
-headers = {'Authorization': "Bearer "+jwt};
+headers = {'Authorization': "Bearer "+auth.jwt};
 
 def reader(data_file:str, queue:queue.Queue):
   with open('./data/'+data_file, 'rb') as f:
