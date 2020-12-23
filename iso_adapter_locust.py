@@ -11,11 +11,12 @@ headers = {'Authorization': "Bearer "+jwt};
 
 def reader(data_file:str, queue:queue.Queue):
   with open('./data/'+data_file, 'rb') as f:
-    while True:
+    data = f.readline()
+    while data:
       data = f.readline()
-      print(data)
+      #print(data)
       queue.put(data,block=True)
-      gevent.sleep(0.1)
+      gevent.sleep(0.01)
 
 
 tx_queue = queue.Queue()
@@ -40,8 +41,8 @@ def tx_factory(locust):
 class TxLocust(HttpUser):
   weight = 1
   tasks = [tx_factory]
-  min_wait = 10
-  max_wait = 15
+  min_wait = 1
+  max_wait = 5
  
 
 spawn_greenlets()
